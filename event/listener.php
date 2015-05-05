@@ -276,7 +276,7 @@ class listener implements EventSubscriberInterface
 				$gender = 'gender_x';
 		}
 
-		$gender = '<img src="' . htmlspecialchars($this->root_path) . htmlspecialchars($this->images_path) . 'icon_' . $gender . '.gif" alt="' . $this->user->lang[strtoupper($gender)] . '" title="' . $this->user->lang[strtoupper($gender)] . '" style="vertical-align:middle;" />';
+		$gender = '<img src="' . $this->root_path . $this->images_path . 'icon_' . $gender . '.gif" alt="' . $this->user->lang[strtoupper($gender)] . '" title="' . $this->user->lang[strtoupper($gender)] . '" style="vertical-align:middle;" />';
 
 		return $gender;
 	}
