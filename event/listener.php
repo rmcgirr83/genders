@@ -87,6 +87,9 @@ class listener implements EventSubscriberInterface
 			'core.memberlist_view_profile'				=> 'memberlist_view_profile',
 			'core.search_get_posts_data'				=> 'search_get_posts_data',
 			'core.search_modify_tpl_ary'				=> 'search_modify_tpl_ary',
+			'core.ucp_register_data_before'				=> 'user_gender_profile',
+			'core.ucp_register_data_after'				=> 'user_gender_profile_validate',
+			'core.ucp_register_user_row_after'			=> 'user_gender_registration_sql',
 		);
 	}
 
@@ -279,5 +282,19 @@ class listener implements EventSubscriberInterface
 		$gender = '<img src="' . $this->root_path . $this->images_path . 'icon_' . $gender . '.gif" alt="' . $this->user->lang[strtoupper($gender)] . '" title="' . $this->user->lang[strtoupper($gender)] . '" style="vertical-align:middle;" />';
 
 		return $gender;
+	}
+
+	/**
+	* Update registration data
+	*
+	* @param object $event The event object
+	* @return null
+	* @access public
+	*/
+	public function user_gender_registration_sql($event)
+	{
+		$event['user_row'] = array_merge($event['user_row'], array(
+				'user_gender' => $this->request->variable('gender', 0),
+		));
 	}
 }

@@ -16,3 +16,10 @@ git clone https://github.com/rmcgirr83/phpBB-3.1-genders.git ext/rmcgirr83/gende
 
 ### 2. activate
 Go to admin panel -> tab customise -> Manage extensions -> enable Genders
+
+## Update instructions:
+1. Go to you phpBB-Board > Admin Control Panel > Customise > Manage extensions > Genders: disable
+2. Delete all files of the extension from ext/rmcgirr83/genders
+3. Upload all the new files to the same locations
+4. Go to you phpBB-Board > Admin Control Panel > Customise > Manage extensions > Genders: enable
+5. Purge the board cache
