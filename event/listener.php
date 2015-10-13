@@ -180,7 +180,7 @@ class listener implements EventSubscriberInterface
 	public function viewtopic_cache_guest_data($event)
 	{
 		$array = $event['user_cache_data'];
-		$array['user_gender'] = 0;
+		$array['user_gender'] = '';
 		$event['user_cache_data'] = $array;
 	}
 
@@ -193,7 +193,11 @@ class listener implements EventSubscriberInterface
 	*/
 	public function viewtopic_modify_post_row($event)
 	{
-		$gender = $this->get_user_gender($event['user_poster_data']['user_gender']);
+		$gender = '';
+		if ($event['user_poster_data']['user_type'] != USER_IGNORE)
+		{
+			$gender = $this->get_user_gender($event['user_poster_data']['user_gender']);
+		}
 
 		$event['post_row'] = array_merge($event['post_row'],array(
 			'USER_GENDER' => $gender,
@@ -209,7 +213,11 @@ class listener implements EventSubscriberInterface
 	*/
 	public function memberlist_view_profile($event)
 	{
-		$gender = $this->get_user_gender($event['member']['user_gender']);
+		$gender = '';
+		if ($event['member']['user_type'] != USER_IGNORE)
+		{
+			$gender = $this->get_user_gender($event['member']['user_gender']);
+		}
 
 		$this->template->assign_vars(array(
 			'USER_GENDER'	=> $gender,
@@ -245,7 +253,11 @@ class listener implements EventSubscriberInterface
 		}
 
 		$array = $event['tpl_ary'];
-		$gender = $this->get_user_gender($event['row']['user_gender']);
+		$gender = '';
+		if ($event['row']['user_type'] != USER_IGNORE)
+		{
+			$gender = $this->get_user_gender($event['row']['user_gender']);
+		}
 		$array = array_merge($array, array(
 			'USER_GENDER'	=> $gender,
 		));
