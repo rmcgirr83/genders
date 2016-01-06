@@ -234,7 +234,7 @@ class listener implements EventSubscriberInterface
 	public function search_get_posts_data($event)
 	{
 		$array = $event['sql_array'];
-		$array['SELECT'] .= ', u.user_gender';
+		$array['SELECT'] .= ', u.user_gender, u.user_type';
 		$event['sql_array'] = $array;
 	}
 
