@@ -102,9 +102,17 @@ class listener implements EventSubscriberInterface
 	*/
 	public function user_gender_profile($event)
 	{
+		if (DEFINED('IN_ADMIN'))
+		{
+			$user_gender = $event['user_row']['user_gender'];
+		}
+		else
+		{
+			$user_gender = $this->user->data['user_gender'];
+		}
 		// Request the user option vars and add them to the data array
 		$event['data'] = array_merge($event['data'], array(
-			'user_gender'	=> $this->request->variable('gender', $this->user->data['user_gender']),
+			'user_gender'	=> $this->request->variable('gender', $user_gender),
 		));
 
 		$this->user->add_lang_ext('rmcgirr83/genders', 'genders');
