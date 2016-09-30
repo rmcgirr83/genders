@@ -106,7 +106,7 @@ class listener implements EventSubscriberInterface
 		$genders = gender_constants::getGenderChoices();
 		$gender_image = $gender_options = '';
 
-		foreach ($genders as $key => $value)
+		foreach($genders as $key => $value)
 		{
 			$selected = ($user_gender == $value) ? ' selected="selected"' : '';
 			$gender_options .= '<option value="' . $value . '" ' . $selected . '>' . $this->user->lang($key) . '</option>';
