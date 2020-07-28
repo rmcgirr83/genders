@@ -13,6 +13,10 @@ namespace rmcgirr83\genders\event;
 /**
 * @ignore
 */
+use phpbb\language\language;
+use phpbb\request\request;
+use phpbb\template\template;
+use phpbb\user;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use rmcgirr83\genders\core\gender_constants;
 
@@ -21,6 +25,9 @@ use rmcgirr83\genders\core\gender_constants;
 */
 class listener implements EventSubscriberInterface
 {
+
+	/** @var \phpbb\language\language */
+	protected $language;
 
 	/** @var \phpbb\request\request */
 	protected $request;
@@ -38,17 +45,22 @@ class listener implements EventSubscriberInterface
 	protected $php_ext;
 
 	public function __construct(
-		\phpbb\request\request $request,
-		\phpbb\template\template $template,
-		\phpbb\user $user,
+		language $language,
+		request $request,
+		template $template,
+		user $user,
 		$phpbb_root_path,
 		$php_ext)
 	{
+		$this->language = $language;
 		$this->request = $request;
 		$this->template = $template;
 		$this->user = $user;
 		$this->root_path = $phpbb_root_path;
 		$this->php_ext = $php_ext;
+
+		// change to false to not make the gender choice required
+		$this->gender_required = true;
 	}
 
 	/**
@@ -61,6 +73,7 @@ class listener implements EventSubscriberInterface
 	static public function getSubscribedEvents()
 	{
 		return array(
+			'core.acp_extensions_run_action_after'	=>	'acp_extensions_run_action_after',
 			'core.ucp_profile_modify_profile_info'		=> 'user_gender_profile',
 			'core.ucp_profile_validate_profile_info'	=> 'user_gender_profile_validate',
 			'core.ucp_profile_info_modify_sql_ary'		=> 'user_gender_profile_sql',
@@ -79,6 +92,24 @@ class listener implements EventSubscriberInterface
 		);
 	}
 
+	/* Display additional metadata in extension details
+	*
+	* @param $event			event object
+	* @param return null
+	* @access public
+	*/
+	public function acp_extensions_run_action_after($event)
+	{
+		if ($event['ext_name'] == 'rmcgirr83/genders' && $event['action'] == 'details')
+		{
+			$this->language->add_lang('genders', $event['ext_name']);
+			$this->template->assign_vars([
+				'L_BUY_ME_A_BEER_EXPLAIN'	=> $this->language->lang('BUY ME A BEER_EXPLAIN', '<a href="' . $this->language->lang('BUY_ME_A_BEER_URL') . '" target="_blank" rel=”noreferrer noopener”>', '</a>'),
+				'S_BUY_ME_A_BEER_GENDERS' => true,
+			]);
+		}
+	}
+
 	/**
 	* Allow users to change their gender
 	*
@@ -90,18 +121,18 @@ class listener implements EventSubscriberInterface
 	{
 		if (DEFINED('IN_ADMIN'))
 		{
-			$user_gender = $event['user_row']['user_gender'];
+			$user_gender = $this->request->variable('user_gender', $event['user_row']['user_gender']);
 		}
 		else
 		{
-			$user_gender = $this->user->data['user_gender'];
+			$user_gender = $this->request->variable('user_gender', $this->user->data['user_gender']);
 		}
 		// Request the user option vars and add them to the data array
-		$event['data'] = array_merge($event['data'], array(
-			'user_gender'	=> $this->request->variable('user_gender', $user_gender),
-		));
+		$event['data'] = array_merge($event['data'], [
+			'user_gender'	=> $user_gender,
+		]);
 
-		$this->user->add_lang_ext('rmcgirr83/genders', 'genders');
+		$this->language->add_lang('genders', 'rmcgirr83/genders');
 
 		$genders = gender_constants::getGenderChoices();
 		$gender_image = $gender_options = '';
@@ -109,14 +140,15 @@ class listener implements EventSubscriberInterface
 		foreach ($genders as $key => $value)
 		{
 			$selected = ($user_gender == $value) ? ' selected="selected"' : '';
-			$gender_options .= '<option value="' . $value . '" ' . $selected . '>' . $this->user->lang($key) . '</option>';
+			$gender_options .= '<option value="' . $value . '" ' . $selected . '>' . $this->language->lang($key) . '</option>';
 			$gender_image .= ($user_gender == $value) ? strtolower($key) : '';
 		}
 
-		$this->template->assign_vars(array(
+		$this->template->assign_vars([
 			'USER_GENDER'		=> $gender_image,
 			'S_GENDER_OPTIONS'	=> $gender_options,
-		));
+			'S_GENDER_REQUIRED'	=> $this->gender_required,
+		]);
 	}
 
 	/**
@@ -128,17 +160,12 @@ class listener implements EventSubscriberInterface
 	*/
 	public function user_gender_profile_validate($event)
 	{
+		if ($event['submit'] && ($this->gender_required && empty($event['data']['user_gender'])))
+		{
 			$array = $event['error'];
-			//ensure gender is validated
-			if (!function_exists('validate_data'))
-			{
-				include($this->root_path . 'includes/functions_user.' . $this->php_ext);
-			}
-			$validate_array = array(
-				'user_gender'	=> array('num', true, 0, 99),
-			);
-			$error = validate_data($event['data'], $validate_array);
-			$event['error'] = array_merge($array, $error);
+			$array[] = $this->language->lang('MUST_CHOOSE_GENDER');
+			$event['error'] = $array;
+		}
 	}
 
 	/**
@@ -150,9 +177,9 @@ class listener implements EventSubscriberInterface
 	*/
 	public function user_gender_profile_sql($event)
 	{
-		$event['sql_ary'] = array_merge($event['sql_ary'], array(
+		$event['sql_ary'] = array_merge($event['sql_ary'], [
 				'user_gender' => $event['data']['user_gender'],
-		));
+		]);
 	}
 
 	/**
@@ -198,9 +225,9 @@ class listener implements EventSubscriberInterface
 			$gender = $this->display_user_gender($event['user_poster_data']['user_gender']);
 		}
 
-		$event['post_row'] = array_merge($event['post_row'],array(
+		$event['post_row'] = array_merge($event['post_row'],[
 			'USER_GENDER' => $gender,
-		));
+		]);
 	}
 
 	/**
@@ -218,9 +245,9 @@ class listener implements EventSubscriberInterface
 			$gender = $this->display_user_gender($event['member']['user_gender']);
 		}
 
-		$this->template->assign_vars(array(
+		$this->template->assign_vars([
 			'USER_GENDER'	=> $gender,
-		));
+		]);
 	}
 
 	/**
@@ -257,9 +284,9 @@ class listener implements EventSubscriberInterface
 		{
 			$gender = $this->display_user_gender($event['row']['user_gender']);
 		}
-		$array = array_merge($array, array(
+		$array = array_merge($array, [
 			'USER_GENDER'	=> $gender,
-		));
+		]);
 
 		$event['tpl_ary'] = $array;
 	}
@@ -273,9 +300,9 @@ class listener implements EventSubscriberInterface
 	*/
 	public function user_gender_registration_sql($event)
 	{
-		$event['user_row'] = array_merge($event['user_row'], array(
+		$event['user_row'] = array_merge($event['user_row'], [
 				'user_gender' => $this->request->variable('user_gender', 0),
-		));
+		]);
 	}
 
 	/**
@@ -287,14 +314,14 @@ class listener implements EventSubscriberInterface
 	 */
 	private function display_user_gender($user_gender)
 	{
-		$this->user->add_lang_ext('rmcgirr83/genders', 'genders');
+		$this->language->add_lang('genders', 'rmcgirr83/genders');
 		$genders = gender_constants::getGenderChoices();
 		$gender = '';
 		foreach ($genders as $key => $value)
 		{
 			if ((int) $user_gender == $value && $user_gender <> 0)
 			{
-				$gender = '<i class="fa ' . strtolower($key) . '" style="font-size:12px" title="' . $this->user->lang($key) . '"></i>';
+				$gender = '<i class="fa ' . strtolower($key) . '" style="font-size:12px" title="' . $this->language->lang($key) . '"></i>';
 			}
 		}
 
