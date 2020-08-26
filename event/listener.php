@@ -39,7 +39,7 @@ class listener implements EventSubscriberInterface
 	protected $user;
 
 	/** @var string phpBB root path */
-	protected $phpbb_root_path;
+	protected $root_path;
 
 	/** @var string phpEx */
 	protected $php_ext;
@@ -49,18 +49,15 @@ class listener implements EventSubscriberInterface
 		request $request,
 		template $template,
 		user $user,
-		$phpbb_root_path,
+		$root_path,
 		$php_ext)
 	{
 		$this->language = $language;
 		$this->request = $request;
 		$this->template = $template;
 		$this->user = $user;
-		$this->root_path = $phpbb_root_path;
+		$this->root_path = $root_path;
 		$this->php_ext = $php_ext;
-
-		// change to false to not make the gender choice required
-		$this->gender_required = true;
 	}
 
 	/**
@@ -75,10 +72,8 @@ class listener implements EventSubscriberInterface
 		return array(
 			'core.acp_extensions_run_action_after'	=>	'acp_extensions_run_action_after',
 			'core.ucp_profile_modify_profile_info'		=> 'user_gender_profile',
-			'core.ucp_profile_validate_profile_info'	=> 'user_gender_profile_validate',
 			'core.ucp_profile_info_modify_sql_ary'		=> 'user_gender_profile_sql',
 			'core.acp_users_modify_profile'				=> 'user_gender_profile',
-			'core.acp_users_profile_validate'			=> 'user_gender_profile_validate',
 			'core.acp_users_profile_modify_sql_ary'		=> 'user_gender_profile_sql',
 			'core.viewtopic_cache_user_data'			=> 'viewtopic_cache_user_data',
 			'core.viewtopic_cache_guest_data'			=> 'viewtopic_cache_guest_data',
@@ -103,10 +98,7 @@ class listener implements EventSubscriberInterface
 		if ($event['ext_name'] == 'rmcgirr83/genders' && $event['action'] == 'details')
 		{
 			$this->language->add_lang('genders', $event['ext_name']);
-			$this->template->assign_vars([
-				'L_BUY_ME_A_BEER_EXPLAIN'	=> $this->language->lang('BUY ME A BEER_EXPLAIN', '<a href="' . $this->language->lang('BUY_ME_A_BEER_URL') . '" target="_blank" rel=”noreferrer noopener”>', '</a>'),
-				'S_BUY_ME_A_BEER_GENDERS' => true,
-			]);
+			$this->template->assign_var('S_BUY_ME_A_BEER_GENDERS', true);
 		}
 	}
 
@@ -147,25 +139,7 @@ class listener implements EventSubscriberInterface
 		$this->template->assign_vars([
 			'USER_GENDER'		=> $gender_image,
 			'S_GENDER_OPTIONS'	=> $gender_options,
-			'S_GENDER_REQUIRED'	=> $this->gender_required,
 		]);
-	}
-
-	/**
-	* Validate users changes to their gender
-	*
-	* @param object $event The event object
-	* @return null
-	* @access public
-	*/
-	public function user_gender_profile_validate($event)
-	{
-		if ($event['submit'] && ($this->gender_required && empty($event['data']['user_gender'])))
-		{
-			$array = $event['error'];
-			$array[] = $this->language->lang('MUST_CHOOSE_GENDER');
-			$event['error'] = $array;
-		}
 	}
 
 	/**
