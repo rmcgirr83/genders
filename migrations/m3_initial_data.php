@@ -13,7 +13,7 @@ class m3_initial_data extends \phpbb\db\migration\migration
 {
 	static public function depends_on()
 	{
-		return ['\rmcgirr83\genders\migrations\m2_initial_schema'];
+		return ['\rmcgirr83\genders\migrations\m2_initial_data'];
 	}
 
 	public function update_data()
