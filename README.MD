@@ -1,4 +1,4 @@
-# ![Genders] Genders for phpBB3
+# Genders for phpBB3
 
 phpBB extension that allows users to be able to choose a gender.  Gender displays on memberlist and viewtopic.
 
