@@ -18,7 +18,7 @@ use phpbb\language\language;
 use phpbb\request\request;
 use phpbb\template\template;
 use phpbb\user;
-use rmcgirr83\genders\core\gender_constants;
+
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
