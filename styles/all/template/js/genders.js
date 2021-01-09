@@ -12,7 +12,7 @@
 	$("#user_gender").change(function () {
 		var gender_id = $(this).val();
         $.ajax({
-            url: AJAX_GENDER.replace(/\_id\/[0-9]*/g, "_id/" + gender_id),
+            url: AJAX_GENDER.replace(/[^\/]+$/, gender_id),
 			dataType: 'text',
 			success: function(data){
 				var json = $.parseJSON(data);
